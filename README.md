@@ -4,9 +4,11 @@ Website running on dann.io
 The data for the CV is structured according to [CVGen](https://github.com/pschichtel/CVGen) by [Phillip Schichtel](https://github.com/pschichtel). The supported structure is as follows (unless otherwise stated the fields are of type string):
 - /cv/activity (extraordinary experience like privat projects)
   - @time
-  - @description
+  - @title
+  - @description (optional)
 - /cv/bio (general data about the person)
   - @first_name
+  - @second_name (optional)
   - @last_name
   - @birth_date
   - @birth_location
@@ -16,10 +18,13 @@ The data for the CV is structured according to [CVGen](https://github.com/pschic
   - @city
   - @phone
   - @email
+  - @languages (JSON object which maps languages to skill level)
+  - @skills (optional) (JSON object which maps from skill categories to JSON objects which map from skill to skill level)
   - @links (optional) (JSON object which maps names to a list of links)
 - /cv/education (schools and universities)
   - @from
   - @until (optional)
+  - @expected_graduation (optional)
   - @name
   - @location
   - @degree (optional)
@@ -31,5 +36,6 @@ The data for the CV is structured according to [CVGen](https://github.com/pschic
   - @name
   - @location
   - @position
+  - @department
   - @description (optional)
   - @applied_tech (optional) (list of strings)

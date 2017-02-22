@@ -1,0 +1,7 @@
+@from="2013"
+@until="2016"
+@name="Duale Hochschule Baden-Württemberg"
+@location="Mannheim"
+@degree="Bachelor of Science"
+@grade="1.9"
+@description="Applied Computer Science"

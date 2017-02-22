@@ -1,0 +1,7 @@
+@from="02/2014"
+@until="04/2014"
+@name="SAP SE"
+@location="Walldorf"
+@position="Working Student"
+@department="Custom Development"
+@description="Umsetzung einer neuen Ansicht im Recipe Management mit ABAP OO und WebDynpro"

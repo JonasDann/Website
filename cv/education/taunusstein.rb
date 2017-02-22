@@ -1,0 +1,6 @@
+@from="2005"
+@until="2013"
+@name="Gymnasium Taunusstein"
+@location="Taunusstein-Bleidenstadt"
+@degree="Abitur"
+@grade="2.2"

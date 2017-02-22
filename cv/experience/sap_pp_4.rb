@@ -1,0 +1,7 @@
+@from="05/2015"
+@until="08/2015"
+@name="SAP SE"
+@location="Walldorf"
+@position="Working Student"
+@department="Portfolio- und Projektmanagement Beratung"
+@description="Integration von Agile Project Management in SAP Portfolio- und Projektmanagement in ABAP"

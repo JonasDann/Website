@@ -1,0 +1,5 @@
+@from="2016"
+@expected_graduation="2018"
+@name="Karlsruhe Institute of Technology"
+@location="Karlsruhe"
+@degree="Master of Science"

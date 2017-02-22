@@ -1,0 +1,7 @@
+@from="11/2014"
+@until="02/2015"
+@name="SAP SE"
+@location="Walldorf"
+@position="Working Student"
+@department="Value Prototyping"
+@description="Umsetzung eines ABAP Remote Function Call Konnektors in Golang"

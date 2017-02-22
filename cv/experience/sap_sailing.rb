@@ -1,0 +1,6 @@
+@from="10/2016"
+@name="SAP SE"
+@location="Walldorf"
+@position="Working Student"
+@department="Sports Sponsoring Sailing"
+@description="Werksstudent in der Entwicklung der SAP Sailing Analytics Suite"
