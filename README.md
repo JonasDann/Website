@@ -16,6 +16,7 @@ The data for the CV is structured according to [CVGen](https://github.com/pschic
   - @house_number
   - @postal_code
   - @city
+  - @country
   - @phone
   - @email
   - @languages (JSON object which maps languages to skill level)

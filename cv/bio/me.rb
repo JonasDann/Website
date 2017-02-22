@@ -7,6 +7,7 @@
 @house_number="2"
 @postal_code="76185"
 @city="Karlsruhe"
+@country="Germany"
 @phone="+49 160 1012270"
 @email="jonas@dann.io"
 @languages={
