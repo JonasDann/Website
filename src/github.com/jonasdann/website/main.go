@@ -9,13 +9,14 @@ import (
 	"reflect"
 	"strings"
 	"os"
+	"encoding/json"
 )
 
 type CV struct {
-	activities  []Activity
+	Activities  []Activity
 	Bio         Bio
-	educations  []Education
-	experiences []Experience
+	Educations  []Education
+	Experiences []Experience
 }
 
 type Activity struct {
@@ -43,25 +44,25 @@ type Bio struct {
 }
 
 type Education struct {
-	from               string
-	until              string
-	expectedGraduation string
-	name               string
-	location           string
-	degree             string
-	grade              string
-	description        string
+	From               string
+	Until              string
+	ExpectedGraduation string
+	Name               string
+	Location           string
+	Degree             string
+	Grade              string
+	Description        string
 }
 
 type Experience struct {
-	from        string
-	until       string
-	name        string
-	location    string
-	position    string
-	department  string
-	description string
-	appliedTech []string
+	From        string
+	Until       string
+	Name        string
+	Location    string
+	Position    string
+	Department  string
+	Description string
+	AppliedTech []string
 }
 
 type Page struct {
@@ -69,49 +70,74 @@ type Page struct {
 	body  template.HTML
 }
 
-func cv(w http.ResponseWriter, r *http.Request) {
-	cv := *new(CV)
-	cv.Bio = *new(Bio)
-	cv.Bio.FirstName = "Jonas"
-	cv.Bio.SecondName = "Christian"
-	cv.Bio.LastName = "Dann"
-	fmt.Println(cv)
+func showCv(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.New("cv").ParseFiles("templates/cv.go.html")
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = tmpl.Execute(w, cv)
+	err = tmpl.Execute(w, curriculumVitae)
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
+var curriculumVitae CV
+
 func main() {
-	readCv()
-	http.HandleFunc("/", cv)
+	curriculumVitae = readCv()
+	http.HandleFunc("/", showCv)
 	http.ListenAndServe(":8000", nil)
 }
 
 const activitiesDir = "cv/activity"
 const bioDir = "cv/bio"
+const educationDir = "cv/education"
+const experienceDir = "cv/experience"
 
-func readCv() {
+func readCv() CV {
 	cv := *new(CV)
 
-	// Read activities
+	// Read Activities
 	typ := reflect.TypeOf(Activity{})
 	files, _ := ioutil.ReadDir(activitiesDir)
-	cv.activities = make([]Activity, len(files))
+	cv.Activities = make([]Activity, len(files))
 	for i, elem := range files {
 		activity := fillStruct(activitiesDir, elem, typ).(Activity)
-		cv.activities[i] = activity
+		cv.Activities[i] = activity
 	}
 	// Read bio
 	typ = reflect.TypeOf(Bio{})
 	files, _ = ioutil.ReadDir(bioDir)
 	cv.Bio = fillStruct(bioDir, files[0], typ).(Bio)
+	// Read Education
+	typ = reflect.TypeOf(Education{})
+	files, _ = ioutil.ReadDir(educationDir)
+	cv.Educations = make([]Education, len(files))
+	for i, elem := range files {
+		education := fillStruct(educationDir, elem, typ).(Education)
+		cv.Educations[i] = education
+	}
+	// Read Experience
+	typ = reflect.TypeOf(Experience{})
+	files, _ = ioutil.ReadDir(experienceDir)
+	cv.Experiences = make([]Experience, len(files))
+	for i, elem := range files {
+		experience := fillStruct(experienceDir, elem, typ).(Experience)
+		cv.Experiences[i] = experience
+	}
 
 	fmt.Println(cv)
+	return cv
+}
+
+func getName(source string) string {
+	name := strings.Title(source)
+	underscoreFinder, _ := regexp.Compile("_([a-z])")
+	characters := underscoreFinder.FindAllStringSubmatch(name, -1)
+	for _, character := range characters {
+		name = strings.Replace(name, character[0], strings.ToUpper(character[1]), -1)
+	}
+	return name
 }
 
 func fillStruct(dir string, fileInfo os.FileInfo, typ reflect.Type) interface{} {
@@ -120,19 +146,40 @@ func fillStruct(dir string, fileInfo os.FileInfo, typ reflect.Type) interface{} 
 	if err != nil {
 		fmt.Println(err)
 	}
-	r, _ := regexp.Compile("@([a-z_]*)=\"([A-Za-z0-9 .:/äöüß+\\-]*)\"")
-	submatches := r.FindAllStringSubmatch(text, -1)
 	struc := reflect.New(typ).Elem()
+	// Handle strings
+	stringRegex, _ := regexp.Compile("@([a-z_]*)=\"([A-Za-z0-9 .:/äöüß+\\-]*)\"")
+	submatches := stringRegex.FindAllStringSubmatch(text, -1)
 	for _, submatch := range submatches {
-		name := strings.Title(submatch[1])
-		underscoreFinder, _ := regexp.Compile("_([a-z])")
-		characters := underscoreFinder.FindAllStringSubmatch(name, -1)
-		for _, character := range characters {
-			name = strings.Replace(name, character[0], strings.ToUpper(character[1]), -1)
-		}
-		fmt.Println(name)
+		name := getName(submatch[1])
 		field := struc.FieldByName(name)
 		field.SetString(submatch[2])
+	}
+	// Handle JSON
+	jsonRegex, _ := regexp.Compile("@([a-z_]*)=({[\\s\\w\":,#{}/\\[\\].]*})")
+	byteSubmatches := jsonRegex.FindAllSubmatch(data, -1)
+	for _, submatch := range byteSubmatches {
+		name := getName(string(submatch[1]))
+		fmt.Println(name)
+		field := struc.FieldByName(name)
+		switch name {
+		case "Languages":
+			var languages map[string]string
+			json.Unmarshal(submatch[2], &languages)
+			field.Set(reflect.ValueOf(languages))
+		case "Skills":
+			var skills map[string]map[string]string
+			json.Unmarshal(submatch[2], &skills)
+			field.Set(reflect.ValueOf(skills))
+		case "Links":
+			var links map[string][]string
+			json.Unmarshal(submatch[2], &links)
+			field.Set(reflect.ValueOf(links))
+		case "AppliedTech":
+			var tech []string
+			json.Unmarshal(submatch[2], &tech)
+			field.Set(reflect.ValueOf(tech))
+		}
 	}
 	return struc.Interface()
 }
