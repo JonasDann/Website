@@ -120,12 +120,18 @@ func fillStruct(dir string, fileInfo os.FileInfo, typ reflect.Type) interface{} 
 	if err != nil {
 		fmt.Println(err)
 	}
-	r, _ := regexp.Compile("@([a-z]*)=\"([A-Za-z0-9 .:/äöüß+\\-]*)\"")
+	r, _ := regexp.Compile("@([a-z_]*)=\"([A-Za-z0-9 .:/äöüß+\\-]*)\"")
 	submatches := r.FindAllStringSubmatch(text, -1)
 	struc := reflect.New(typ).Elem()
 	for _, submatch := range submatches {
-		fmt.Println(strings.Title(submatch[1]))
-		field := struc.FieldByName(strings.Title(submatch[1]))
+		name := strings.Title(submatch[1])
+		underscoreFinder, _ := regexp.Compile("_([a-z])")
+		characters := underscoreFinder.FindAllStringSubmatch(name, -1)
+		for _, character := range characters {
+			name = strings.Replace(name, character[0], strings.ToUpper(character[1]), -1)
+		}
+		fmt.Println(name)
+		field := struc.FieldByName(name)
 		field.SetString(submatch[2])
 	}
 	return struc.Interface()
