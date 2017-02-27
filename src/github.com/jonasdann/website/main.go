@@ -4,6 +4,11 @@ import (
 	"net/http"
 	"html/template"
 	"fmt"
+	"io/ioutil"
+	"regexp"
+	"reflect"
+	"strings"
+	"os"
 )
 
 type CV struct {
@@ -14,27 +19,27 @@ type CV struct {
 }
 
 type Activity struct {
-	time        string
-	title       string
-	description string
+	Time        string
+	Title       string
+	Description string
 }
 
 type Bio struct {
 	FirstName     string
 	SecondName    string
 	LastName      string
-	birthDate     string
-	birthLocation string
-	street        string
-	houseNumber   string
-	postalCode    string
-	city          string
-	country       string
-	phone         string
-	email         string
-	languages     map[string]string
-	skills        map[string]map[string]string
-	links         map[string][]string
+	BirthDate     string
+	BirthLocation string
+	Street        string
+	HouseNumber   string
+	PostalCode    string
+	City          string
+	Country       string
+	Phone         string
+	Email         string
+	Languages     map[string]string
+	Skills        map[string]map[string]string
+	Links         map[string][]string
 }
 
 type Education struct {
@@ -71,13 +76,57 @@ func cv(w http.ResponseWriter, r *http.Request) {
 	cv.Bio.SecondName = "Christian"
 	cv.Bio.LastName = "Dann"
 	fmt.Println(cv)
-	tmpl, err1 := template.New("cv").ParseFiles("templates/cv.go.html")
-	fmt.Println(err1)
-	err2 := tmpl.Execute(w, cv)
-	fmt.Println(err2)
+	tmpl, err := template.New("cv").ParseFiles("templates/cv.go.html")
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = tmpl.Execute(w, cv)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func main() {
+	readCv()
 	http.HandleFunc("/", cv)
 	http.ListenAndServe(":8000", nil)
+}
+
+const activitiesDir = "cv/activity"
+const bioDir = "cv/bio"
+
+func readCv() {
+	cv := *new(CV)
+
+	// Read activities
+	typ := reflect.TypeOf(Activity{})
+	files, _ := ioutil.ReadDir(activitiesDir)
+	cv.activities = make([]Activity, len(files))
+	for i, elem := range files {
+		activity := fillStruct(activitiesDir, elem, typ).(Activity)
+		cv.activities[i] = activity
+	}
+	// Read bio
+	typ = reflect.TypeOf(Bio{})
+	files, _ = ioutil.ReadDir(bioDir)
+	cv.Bio = fillStruct(bioDir, files[0], typ).(Bio)
+
+	fmt.Println(cv)
+}
+
+func fillStruct(dir string, fileInfo os.FileInfo, typ reflect.Type) interface{} {
+	data, err := ioutil.ReadFile(dir + "/" + fileInfo.Name())
+	text := string(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	r, _ := regexp.Compile("@([a-z]*)=\"([A-Za-z0-9 .:/äöüß+\\-]*)\"")
+	submatches := r.FindAllStringSubmatch(text, -1)
+	struc := reflect.New(typ).Elem()
+	for _, submatch := range submatches {
+		fmt.Println(strings.Title(submatch[1]))
+		field := struc.FieldByName(strings.Title(submatch[1]))
+		field.SetString(submatch[2])
+	}
+	return struc.Interface()
 }
